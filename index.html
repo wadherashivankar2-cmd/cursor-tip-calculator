@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tip calculator</title>
+  <meta name="description" content="Split a restaurant bill. Enter the check, choose a tip percent, and see the tip, the total, and what each person owes.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23171717'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-size='16' font-weight='600' fill='%23ffffff'%3E%25%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3f2ef;
+      --surface: #ffffff;
+      --text: #111111;
+      --muted: #5e5e5e;
+      --line: #e6e4df;
+      --chip: #f3f2ef;
+      --accent: #171717;
+      --accent-text: #ffffff;
+      --error: #8f2d2d;
+      --error-bg: #f8eeee;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --space-50: 4px;
+      --space-75: 8px;
+      --space-100: 12px;
+      --space-200: 16px;
+      --space-300: 24px;
+      --space-400: 32px;
+      --radius-card: 24px;
+      --radius-control: 8px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: "Manrope", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .skip {
+      position: absolute;
+      left: var(--space-200);
+      top: var(--space-200);
+      transform: translateY(-160%);
+      background: var(--accent);
+      color: var(--accent-text);
+      padding: var(--space-75) var(--space-100);
+      border-radius: var(--radius-control);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 600;
+      text-decoration: none;
+      z-index: 2;
+    }
+
+    .skip:focus {
+      transform: translateY(0);
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-300);
+    }
+
+    .card {
+      width: min(100%, 440px);
+      background: var(--surface);
+      border-radius: var(--radius-card);
+      padding: var(--space-400);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-300);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-300);
+    }
+
+    .heading-5 {
+      margin: 0;
+      max-width: 680px;
+      font-size: 24px;
+      line-height: 32px;
+      font-weight: 600;
+      text-wrap: balance;
+      background-image: linear-gradient(90deg, #000000, #666666);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .body-3 {
+      margin: var(--space-75) 0 0;
+      max-width: 680px;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 400;
+      color: var(--muted);
+      text-wrap: pretty;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-75);
+    }
+
+    .title-4 {
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 500;
+    }
+
+    .input,
+    .stepper input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: var(--radius-control);
+      padding: var(--space-75) var(--space-100);
+      font: inherit;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 500;
+      transition: border-color 300ms var(--ease), background-color 300ms var(--ease);
+    }
+
+    .input:hover,
+    .stepper input:hover {
+      border-color: #c8c6c0;
+    }
+
+    .input:focus,
+    .stepper input:focus,
+    .chip:focus-visible,
+    .icon-button:focus-visible,
+    .button-md:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .input[aria-invalid="true"] {
+      border-color: var(--error);
+      background: var(--error-bg);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-75);
+    }
+
+    .chip,
+    .icon-button,
+    .button-md {
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+      transition: background-color 300ms var(--ease), color 300ms var(--ease), transform 500ms var(--ease), opacity 300ms var(--ease);
+    }
+
+    .chip {
+      background: var(--chip);
+      color: var(--text);
+      border-radius: var(--radius-control);
+      padding: var(--space-75) var(--space-100);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 600;
+    }
+
+    .chip:hover,
+    .icon-button:hover,
+    .button-md:hover {
+      background: #e7e5e0;
+    }
+
+    .chip[aria-pressed="true"] {
+      background: var(--accent);
+      color: var(--accent-text);
+    }
+
+    .chip[aria-pressed="true"]:hover {
+      background: #2a2a2a;
+    }
+
+    .chip:active,
+    .icon-button:active,
+    .button-md:active {
+      transform: scale(0.98);
+    }
+
+    .chip:disabled,
+    .icon-button:disabled,
+    .button-md:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: var(--space-75);
+    }
+
+    .stepper input {
+      text-align: center;
+      max-width: 96px;
+    }
+
+    .icon-button {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      background: var(--chip);
+      color: var(--text);
+      border-radius: var(--radius-control);
+    }
+
+    .icon-button svg {
+      display: block;
+    }
+
+    .results {
+      display: grid;
+      gap: var(--space-100);
+      background: var(--chip);
+      border-radius: var(--radius-control);
+      padding: var(--space-200);
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-200);
+    }
+
+    .caption-2 {
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .title-2 {
+      font-size: 18px;
+      line-height: 28px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-row.emphasis .title-2 {
+      font-size: 24px;
+      line-height: 32px;
+      font-weight: 600;
+    }
+
+    .empty {
+      margin: 0;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 400;
+      color: var(--muted);
+      text-wrap: pretty;
+    }
+
+    .error {
+      margin: 0;
+      padding: var(--space-75) var(--space-100);
+      border-radius: var(--radius-control);
+      background: var(--error-bg);
+      color: var(--error);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 500;
+    }
+
+    .error[hidden],
+    .custom-wrap[hidden],
+    .results[hidden],
+    .empty[hidden] {
+      display: none;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .button-md {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-control);
+      padding: var(--space-75) var(--space-100);
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 600;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .chip,
+      .icon-button,
+      .button-md,
+      .input,
+      .stepper input {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#calculator">Skip to calculator</a>
+  <main class="page">
+    <section class="card" id="calculator" aria-labelledby="calc-title">
+      <header>
+        <h1 class="heading-5" id="calc-title">Split the bill fairly</h1>
+        <p class="body-3">Enter the check, choose a tip, and see what each person owes.</p>
+      </header>
+
+      <form id="tip-form" novalidate>
+        <div class="field">
+          <label class="title-4" for="bill">Bill amount</label>
+          <input class="input" id="bill" name="bill" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-describedby="form-error">
+        </div>
+
+        <div class="field">
+          <span class="title-4" id="tip-label">Tip percent</span>
+          <div class="chips" role="group" aria-labelledby="tip-label">
+            <button class="chip" type="button" data-tip="15">15%</button>
+            <button class="chip" type="button" data-tip="18" aria-pressed="true">18%</button>
+            <button class="chip" type="button" data-tip="20">20%</button>
+            <button class="chip" type="button" data-tip="25">25%</button>
+            <button class="chip" type="button" data-tip="custom">Custom</button>
+          </div>
+          <div class="custom-wrap" id="custom-wrap" hidden>
+            <label class="title-4" for="custom-tip">Custom tip percent</label>
+            <input class="input" id="custom-tip" name="custom-tip" type="text" inputmode="decimal" autocomplete="off" placeholder="22" aria-describedby="form-error">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="title-4" for="people">People</label>
+          <div class="stepper">
+            <button class="icon-button" type="button" id="people-down" aria-label="Remove one person">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <input class="input" id="people" name="people" type="text" inputmode="numeric" value="1" aria-describedby="form-error">
+            <button class="icon-button" type="button" id="people-up" aria-label="Add one person">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <p class="error" id="form-error" role="alert" hidden></p>
+
+        <p class="empty" id="empty-state">Add a bill amount to see the split.</p>
+
+        <div class="results" id="results" hidden aria-live="polite">
+          <div class="result-row">
+            <span class="caption-2">Tip</span>
+            <span class="title-2" id="tip-amount">$0.00</span>
+          </div>
+          <div class="result-row">
+            <span class="caption-2">Total</span>
+            <span class="title-2" id="total-amount">$0.00</span>
+          </div>
+          <div class="result-row emphasis">
+            <span class="caption-2">Each person</span>
+            <span class="title-2" id="each-amount">$0.00</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="button-md" type="reset" id="reset">Reset</button>
+        </div>
+      </form>
+    </section>
+  </main>
+  <script>
+    const form = document.getElementById("tip-form");
+    const billInput = document.getElementById("bill");
+    const peopleInput = document.getElementById("people");
+    const customWrap = document.getElementById("custom-wrap");
+    const customInput = document.getElementById("custom-tip");
+    const chips = Array.from(document.querySelectorAll(".chip"));
+    const peopleDown = document.getElementById("people-down");
+    const peopleUp = document.getElementById("people-up");
+    const errorEl = document.getElementById("form-error");
+    const emptyEl = document.getElementById("empty-state");
+    const resultsEl = document.getElementById("results");
+    const tipAmountEl = document.getElementById("tip-amount");
+    const totalAmountEl = document.getElementById("total-amount");
+    const eachAmountEl = document.getElementById("each-amount");
+
+    const money = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD"
+    });
+
+    let tipChoice = "18";
+
+    function parseAmount(raw) {
+      const trimmed = raw.trim();
+      if (trimmed === "") return null;
+      if (!/^\d*\.?\d{0,2}$/.test(trimmed)) return NaN;
+      const value = Number(trimmed);
+      if (!Number.isFinite(value) || value < 0) return NaN;
+      return value;
+    }
+
+    function parsePeople(raw) {
+      const trimmed = raw.trim();
+      if (!/^\d+$/.test(trimmed)) return NaN;
+      const value = Number(trimmed);
+      if (!Number.isInteger(value) || value < 1 || value > 100) return NaN;
+      return value;
+    }
+
+    function showError(message, field) {
+      errorEl.textContent = message;
+      errorEl.hidden = false;
+      resultsEl.hidden = true;
+      emptyEl.hidden = true;
+      billInput.setAttribute("aria-invalid", field === billInput ? "true" : "false");
+      peopleInput.setAttribute("aria-invalid", field === peopleInput ? "true" : "false");
+      customInput.setAttribute("aria-invalid", field === customInput ? "true" : "false");
+    }
+
+    function clearError() {
+      errorEl.hidden = true;
+      errorEl.textContent = "";
+      billInput.setAttribute("aria-invalid", "false");
+      peopleInput.setAttribute("aria-invalid", "false");
+      customInput.setAttribute("aria-invalid", "false");
+    }
+
+    function setTipChoice(next) {
+      tipChoice = next;
+      chips.forEach((chip) => {
+        chip.setAttribute("aria-pressed", chip.dataset.tip === next ? "true" : "false");
+      });
+      const custom = next === "custom";
+      customWrap.hidden = !custom;
+      if (custom) customInput.focus();
+    }
+
+    function syncPeopleButtons(count) {
+      peopleDown.disabled = !Number.isInteger(count) || count <= 1;
+      peopleUp.disabled = !Number.isInteger(count) || count >= 100;
+    }
+
+    function render() {
+      const bill = parseAmount(billInput.value);
+      const people = parsePeople(peopleInput.value);
+      syncPeopleButtons(people);
+
+      if (bill === null) {
+        clearError();
+        emptyEl.textContent = "Add a bill amount to see the split.";
+        resultsEl.hidden = true;
+        emptyEl.hidden = false;
+        return;
+      }
+      if (Number.isNaN(bill)) {
+        showError("Enter a bill using dollars and cents, like 42.80.", billInput);
+        return;
+      }
+
+      let percent = Number(tipChoice);
+      if (tipChoice === "custom") {
+        const custom = parseAmount(customInput.value);
+        if (custom === null) {
+          clearError();
+          resultsEl.hidden = true;
+          emptyEl.hidden = false;
+          emptyEl.textContent = "Enter a custom tip percent to see the split.";
+          return;
+        }
+        if (Number.isNaN(custom) || custom > 100) {
+          showError("Enter a tip percent from 0 to 100.", customInput);
+          return;
+        }
+        percent = custom;
+      }
+
+      if (Number.isNaN(people)) {
+        showError("Enter a whole number of people from 1 to 100.", peopleInput);
+        return;
+      }
+
+      clearError();
+      emptyEl.textContent = "Add a bill amount to see the split.";
+      const billCents = Math.round(bill * 100);
+      const tipCents = Math.round(billCents * percent / 100);
+      const totalCents = billCents + tipCents;
+      const eachCents = Math.round(totalCents / people);
+
+      tipAmountEl.textContent = money.format(tipCents / 100);
+      totalAmountEl.textContent = money.format(totalCents / 100);
+      eachAmountEl.textContent = money.format(eachCents / 100);
+      emptyEl.hidden = true;
+      resultsEl.hidden = false;
+    }
+
+    chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        setTipChoice(chip.dataset.tip);
+        render();
+      });
+    });
+
+    peopleDown.addEventListener("click", () => {
+      const current = parsePeople(peopleInput.value);
+      const next = Number.isNaN(current) ? 1 : Math.max(1, current - 1);
+      peopleInput.value = String(next);
+      render();
+    });
+
+    peopleUp.addEventListener("click", () => {
+      const current = parsePeople(peopleInput.value);
+      const next = Number.isNaN(current) ? 1 : Math.min(100, current + 1);
+      peopleInput.value = String(next);
+      render();
+    });
+
+    form.addEventListener("input", render);
+    form.addEventListener("reset", () => {
+      window.setTimeout(() => {
+        setTipChoice("18");
+        peopleInput.value = "1";
+        customInput.value = "";
+        render();
+        billInput.focus();
+      }, 0);
+    });
+
+    setTipChoice("18");
+    render();
+  </script>
+</body>
+</html>
